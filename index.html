@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is a Large Language Model? | Interactive Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#05070f',
+                            card: '#0d111d',
+                            accent: '#00f2fe',
+                            pink: '#f43f5e',
+                            amber: '#fbbf24',
+                            emerald: '#10b981'
+                        }
+                    },
+                    boxShadow: {
+                        'glow-cyan': '0 0 25px -5px rgba(0, 242, 254, 0.4)',
+                        'glow-amber': '0 0 25px -5px rgba(251, 191, 36, 0.4)',
+                        'glow-pink': '0 0 25px -5px rgba(244, 63, 94, 0.4)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Font Size Utilities */
+        .text-scale-sm { font-size: 0.875rem; }
+        .text-scale-base { font-size: 1rem; }
+        .text-scale-lg { font-size: 1.125rem; }
+        .text-scale-xl { font-size: 1.25rem; }
+
+        /* Glassmorphism card */
+        .glass-card {
+            background: rgba(13, 17, 29, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Themes setup */
+        .theme-cyberpunk {
+            --bg-main: #05070f;
+            --text-main: #f8fafc;
+            --accent-glow: #00f2fe;
+            --card-bg: rgba(13, 17, 29, 0.85);
+            --card-border: rgba(0, 242, 254, 0.25);
+        }
+
+        .theme-gold {
+            --bg-main: #0c0a09;
+            --text-main: #fef3c7;
+            --accent-glow: #f59e0b;
+            --card-bg: rgba(28, 25, 23, 0.85);
+            --card-border: rgba(245, 158, 11, 0.3);
+        }
+
+        .theme-matrix {
+            --bg-main: #022c22;
+            --text-main: #ecfdf5;
+            --accent-glow: #10b981;
+            --card-bg: rgba(6, 78, 59, 0.85);
+            --card-border: rgba(16, 185, 129, 0.3);
+        }
+
+        .theme-midnight {
+            --bg-main: #0f172a;
+            --text-main: #f1f5f9;
+            --accent-glow: #38bdf8;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --card-border: rgba(56, 189, 248, 0.3);
+        }
+
+        .theme-light {
+            --bg-main: #f8fafc;
+            --text-main: #0f172a;
+            --accent-glow: #0284c7;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: rgba(2, 132, 199, 0.2);
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .theme-card {
+            background: var(--card-bg) !important;
+            border-color: var(--card-border) !important;
+        }
+
+        /* Pulse glowing animation */
+        @keyframes subtle-glow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+        .glow-pulse {
+            animation: subtle-glow 4s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body id="app-body" class="theme-cyberpunk text-scale-base min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+    <!-- Ambient Cinematic Backdrop Lights -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl glow-pulse"></div>
+        <div class="absolute top-1/2 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl glow-pulse" style="animation-delay: 2s;"></div>
+        <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl glow-pulse" style="animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Header Controls -->
+    <header class="relative z-10 border-b border-white/10 backdrop-blur-md sticky top-0 px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center space-x-3">
+            <div class="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/40 text-cyan-400 shadow-glow-cyan">
+                <i data-lucide="brain-circuit" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-xl md:text-2xl tracking-tight text-white flex items-center gap-2">
+                    What Is a Large Language Model?
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono">Term #1</span>
+                </h1>
+                <p class="text-xs md:text-sm text-slate-400 italic">"A next-word predictor wearing the costume of understanding"</p>
+            </div>
+        </div>
+
+        <!-- Global UI Controls: Theme & Font Size -->
+        <div class="flex items-center space-x-3 flex-wrap gap-2">
+            <!-- Font Size Picker -->
+            <div class="flex items-center bg-black/40 border border-white/15 rounded-xl p-1 gap-1">
+                <span class="text-xs text-slate-400 px-2 font-mono flex items-center gap-1">
+                    <i data-lucide="type" class="w-3.5 h-3.5"></i> Size
+                </span>
+                <button onclick="setFontSize('sm')" id="btn-font-sm" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all hover:bg-white/10">S</button>
+                <button onclick="setFontSize('base')" id="btn-font-base" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all bg-cyan-500 text-black shadow-md">M</button>
+                <button onclick="setFontSize('lg')" id="btn-font-lg" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all hover:bg-white/10">L</button>
+                <button onclick="setFontSize('xl')" id="btn-font-xl" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all hover:bg-white/10">XL</button>
+            </div>
+
+            <!-- Theme Picker -->
+            <div class="flex items-center bg-black/40 border border-white/15 rounded-xl p-1.5 gap-1">
+                <span class="text-xs text-slate-400 px-1 font-mono flex items-center gap-1">
+                    <i data-lucide="palette" class="w-3.5 h-3.5"></i>
+                </span>
+                <button onclick="setTheme('cyberpunk')" title="Cinematic Cyberpunk" class="w-6 h-6 rounded-lg bg-cyan-400 border border-white/30 hover:scale-110 transition-transform"></button>
+                <button onclick="setTheme('gold')" title="Cyber Gold" class="w-6 h-6 rounded-lg bg-amber-400 border border-white/30 hover:scale-110 transition-transform"></button>
+                <button onclick="setTheme('matrix')" title="Matrix Emerald" class="w-6 h-6 rounded-lg bg-emerald-400 border border-white/30 hover:scale-110 transition-transform"></button>
+                <button onclick="setTheme('midnight')" title="Midnight Blue" class="w-6 h-6 rounded-lg bg-sky-400 border border-white/30 hover:scale-110 transition-transform"></button>
+                <button onclick="setTheme('light')" title="High Contrast Light" class="w-6 h-6 rounded-lg bg-slate-100 border border-slate-400 hover:scale-110 transition-transform"></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 md:px-8 py-8 space-y-10">
+
+        <!-- Hero Banner: Core Idea -->
+        <section class="theme-card glass-card rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden transition-all duration-300 border">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                <div class="lg:col-span-7 space-y-3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-semibold">
+                        <i data-lucide="zap" class="w-3.5 h-3.5"></i> Core Architectural Truth
+                    </div>
+                    <h2 class="text-3xl md:text-4xl font-black tracking-tight text-white">
+                        "Pattern completion, not comprehension"
+                    </h2>
+                    <p class="text-slate-300 leading-relaxed">
+                        An LLM does not possess a human-like comprehension module or reasoning mind. It is a high-speed mathematical predictor designed to calculate the most probable token following a given context sequence.
+                    </p>
+                </div>
+                <!-- Core Idea Cards -->
+                <div class="lg:col-span-5 grid grid-cols-1 gap-3">
+                    <div class="p-3.5 rounded-xl bg-black/40 border border-white/10 flex items-center space-x-3 hover:border-cyan-500/40 transition-colors">
+                        <i data-lucide="x-circle" class="w-6 h-6 text-rose-400 shrink-0"></i>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">No understanding module inside</h4>
+                            <p class="text-xs text-slate-400">Zero inherent consciousness or semantic awareness.</p>
+                        </div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-black/40 border border-white/10 flex items-center space-x-3 hover:border-amber-500/40 transition-colors">
+                        <i data-lucide="bar-chart-2" class="w-6 h-6 text-amber-400 shrink-0"></i>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Just very good prediction</h4>
+                            <p class="text-xs text-slate-400">Statistical patterns extracted from massive training sets.</p>
+                        </div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-black/40 border border-white/10 flex items-center space-x-3 hover:border-emerald-500/40 transition-colors">
+                        <i data-lucide="repeat" class="w-6 h-6 text-emerald-400 shrink-0"></i>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">Repeated, word by word</h4>
+                            <p class="text-xs text-slate-400">Autoregressive loops generating answers token by token.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3 Interactive Stages Pipeline -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="layers" class="w-5 h-5 text-cyan-400"></i> The 3-Step LLM Learning Pipeline
+                    </h3>
+                    <p class="text-xs text-slate-400">Click any card stage below to inspect its operational mechanics.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Step 1: Massive Reading -->
+                <div onclick="selectPipelineStage(1)" id="stage-card-1" class="theme-card glass-card rounded-2xl p-6 cursor-pointer border-2 border-cyan-500/50 hover:border-cyan-400 transition-all duration-300 shadow-glow-cyan flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-3 py-1 rounded-full">Phase 01</span>
+                            <i data-lucide="book-open" class="w-6 h-6 text-cyan-400 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white">Massive Reading</h4>
+                        <ul class="text-xs text-slate-300 space-y-2.5 font-mono">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i> Reads billions of sentences</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i> Books, websites, articles</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i> No one explains meaning</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i> Just sees patterns repeat</li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-3 border-t border-white/10">
+                        <span class="text-xs italic text-cyan-300 font-semibold">"Reads everything, understands nothing"</span>
+                    </div>
+                </div>
+
+                <!-- Step 2: Pattern Memory -->
+                <div onclick="selectPipelineStage(2)" id="stage-card-2" class="theme-card glass-card rounded-2xl p-6 cursor-pointer border-2 border-transparent hover:border-amber-400/50 transition-all duration-300 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full">Phase 02</span>
+                            <i data-lucide="cpu" class="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white">Pattern Memory</h4>
+                        <ul class="text-xs text-slate-300 space-y-2.5 font-mono">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-amber-400"></i> "Thank you for" seen millions of times</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-amber-400"></i> Usually followed by "your business"</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-amber-400"></i> Builds statistical instincts</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-amber-400"></i> No dictionary, just repetition</li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-3 border-t border-white/10">
+                        <span class="text-xs italic text-amber-300 font-semibold">"Pure pattern completion"</span>
+                    </div>
+                </div>
+
+                <!-- Step 3: Next Word -->
+                <div onclick="selectPipelineStage(3)" id="stage-card-3" class="theme-card glass-card rounded-2xl p-6 cursor-pointer border-2 border-transparent hover:border-purple-400/50 transition-all duration-300 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-full">Phase 03</span>
+                            <i data-lucide="sparkles" class="w-6 h-6 text-purple-400 group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white">Next Word Prediction</h4>
+                        <ul class="text-xs text-slate-300 space-y-2.5 font-mono">
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i> Picks most likely next word</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i> One word at a time</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i> Repeats thousands of times/sec</li>
+                            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i> Full answer emerges</li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-3 border-t border-white/10">
+                        <span class="text-xs italic text-purple-300 font-semibold">"Feels understood, isn't"</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Playground Sandbox -->
+        <section class="theme-card glass-card rounded-3xl p-6 md:p-8 border shadow-2xl space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-white/10 pb-4 gap-2">
+                <div>
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="terminal" class="w-5 h-5 text-amber-400"></i> Interactive Next-Word Predictor Simulator
+                    </h3>
+                    <p class="text-xs text-slate-400">Choose or type a prompt sequence to observe the model's calculated token probabilities.</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-mono text-cyan-400 bg-black/40 px-3 py-1.5 rounded-lg border border-white/10">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                    <span>Probabilistic Engine Active</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left: Prompt Inputs -->
+                <div class="lg:col-span-5 space-y-4">
+                    <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Select Preset Prompt Context:</label>
+                    <div class="space-y-2">
+                        <button onclick="runPrediction('Thank you for')" class="w-full text-left bg-black/40 hover:bg-black/60 p-3.5 rounded-xl border border-white/10 hover:border-cyan-500/50 transition-all flex items-center justify-between group">
+                            <span class="font-mono text-sm text-cyan-300">"Thank you for..."</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition-colors"></i>
+                        </button>
+                        <button onclick="runPrediction('Once upon a')" class="w-full text-left bg-black/40 hover:bg-black/60 p-3.5 rounded-xl border border-white/10 hover:border-cyan-500/50 transition-all flex items-center justify-between group">
+                            <span class="font-mono text-sm text-cyan-300">"Once upon a..."</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition-colors"></i>
+                        </button>
+                        <button onclick="runPrediction('Artificial Intelligence is')" class="w-full text-left bg-black/40 hover:bg-black/60 p-3.5 rounded-xl border border-white/10 hover:border-cyan-500/50 transition-all flex items-center justify-between group">
+                            <span class="font-mono text-sm text-cyan-300">"Artificial Intelligence is..."</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition-colors"></i>
+                        </button>
+                        <button onclick="runPrediction('In the realm of')" class="w-full text-left bg-black/40 hover:bg-black/60 p-3.5 rounded-xl border border-white/10 hover:border-cyan-500/50 transition-all flex items-center justify-between group">
+                            <span class="font-mono text-sm text-cyan-300">"In the realm of..."</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition-colors"></i>
+                        </button>
+                    </div>
+
+                    <!-- Custom Prompt Input -->
+                    <div class="pt-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">Or Type Custom Prompt Prefix:</label>
+                        <div class="flex gap-2">
+                            <input id="custom-prompt-input" type="text" placeholder="e.g. Deep learning models can..." class="flex-1 bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-cyan-500">
+                            <button onclick="handleCustomSubmit()" class="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-sm rounded-xl transition-all shadow-glow-cyan">
+                                Predict
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Animated Prediction Bars -->
+                <div class="lg:col-span-7 bg-black/50 p-6 rounded-2xl border border-white/10 space-y-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Context Sequence</span>
+                            <span id="active-prompt-display" class="font-mono text-sm font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-lg border border-cyan-500/20">"Thank you for"</span>
+                        </div>
+
+                        <!-- Prediction Output Rows -->
+                        <div id="probabilities-list" class="space-y-4">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-white/10 flex items-start gap-3">
+                        <i data-lucide="info" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
+                        <p id="prediction-explanation" class="text-xs text-slate-300 leading-relaxed font-mono">
+                            Top candidate selected: <strong class="text-cyan-400">"your business"</strong> with 88% probability based on training data pattern frequencies.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="relative z-10 border-t border-white/10 bg-black/60 backdrop-blur-md mt-12 py-8 px-4 md:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            
+            <!-- Author & Connect -->
+            <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-6 text-center sm:text-left">
+                <div>
+                    <h4 class="text-base font-extrabold text-white">D. Meenakshi Sundaram</h4>
+                    <p class="text-xs text-slate-400">AI Concepts & Interactive Visualizations</p>
+                </div>
+                
+                <!-- LinkedIn Link -->
+                <a href="https://www.linkedin.com/in/dmsmtech" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 hover:text-white transition-all text-xs font-bold shadow-lg group">
+                    <i data-lucide="linkedin" class="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform"></i>
+                    <span>Connect on LinkedIn</span>
+                </a>
+            </div>
+
+            <!-- Copyright & Disclaimer -->
+            <div class="text-center md:text-right space-y-1 max-w-lg">
+                <p class="text-xs font-semibold text-slate-300">
+                    &copy; 2026 D. Meenakshi Sundaram. All rights reserved.
+                </p>
+                <p class="text-[11px] text-slate-400 leading-tight">
+                    Disclaimer: This interactive visualization is created strictly for educational and instructional purposes to illustrate Large Language Model concepts.
+                </p>
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Preset probability dataset
+        const promptData = {
+            "Thank you for": {
+                choices: [
+                    { word: "your business", percent: 88, color: "bg-cyan-400" },
+                    { word: "your time", percent: 8, color: "bg-amber-400" },
+                    { word: "reaching out", percent: 3, color: "bg-purple-400" },
+                    { word: "the feedback", percent: 1, color: "bg-slate-500" }
+                ],
+                explanation: "High frequency in corporate email corpora leads to 'your business' being the overwhelming statistical choice."
+            },
+            "Once upon a": {
+                choices: [
+                    { word: "time", percent: 96, color: "bg-cyan-400" },
+                    { word: "midnight", percent: 3, color: "bg-amber-400" },
+                    { word: "hill", percent: 1, color: "bg-slate-500" }
+                ],
+                explanation: "'time' almost universally follows 'Once upon a' across literary datasets."
+            },
+            "Artificial Intelligence is": {
+                choices: [
+                    { word: "transforming", percent: 42, color: "bg-cyan-400" },
+                    { word: "a powerful tool", percent: 30, color: "bg-amber-400" },
+                    { word: "evolving rapidly", percent: 20, color: "bg-purple-400" },
+                    { word: "changing the world", percent: 8, color: "bg-emerald-400" }
+                ],
+                explanation: "Modern tech literature exhibits strong probability distributions around transformation verbs."
+            },
+            "In the realm of": {
+                choices: [
+                    { word: "possibilities", percent: 45, color: "bg-cyan-400" },
+                    { word: "computer science", percent: 35, color: "bg-amber-400" },
+                    { word: "digital technology", percent: 15, color: "bg-purple-400" },
+                    { word: "fantasy", percent: 5, color: "bg-slate-500" }
+                ],
+                explanation: "Abstract contextual framing prompts varied but domain-weighted next tokens."
+            }
+        };
+
+        // Render Prediction Bars
+        function runPrediction(promptText) {
+            const activeDisplay = document.getElementById('active-prompt-display');
+            const listContainer = document.getElementById('probabilities-list');
+            const explanationText = document.getElementById('prediction-explanation');
+
+            activeDisplay.innerText = `"${promptText}"`;
+            listContainer.innerHTML = '';
+
+            const dataset = promptData[promptText] || generateFallbackProbabilities(promptText);
+
+            dataset.choices.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = "space-y-1.5";
+                row.innerHTML = `
+                    <div class="flex justify-between items-center text-xs font-mono">
+                        <span class="text-white font-bold flex items-center gap-1.5">
+                            <span class="text-slate-500">#${index + 1}</span> + "${item.word}"
+                        </span>
+                        <span class="text-cyan-400 font-bold">${item.percent}% probability</span>
+                    </div>
+                    <div class="w-full bg-slate-800/80 rounded-full h-3 overflow-hidden border border-white/5">
+                        <div class="${item.color} h-3 rounded-full transition-all duration-700 ease-out" style="width: ${item.percent}%"></div>
+                    </div>
+                `;
+                listContainer.appendChild(row);
+            });
+
+            explanationText.innerText = dataset.explanation;
+        }
+
+        // Custom Prompt Dynamic Fallback
+        function generateFallbackProbabilities(customText) {
+            return {
+                choices: [
+                    { word: "processing context", percent: 65, color: "bg-cyan-400" },
+                    { word: "generating response", percent: 22, color: "bg-amber-400" },
+                    { word: "analyzing pattern", percent: 13, color: "bg-purple-400" }
+                ],
+                explanation: `Custom input "${customText}" processed through statistical pattern weights.`
+            };
+        }
+
+        function handleCustomSubmit() {
+            const input = document.getElementById('custom-prompt-input');
+            const val = input.value.trim();
+            if (val) {
+                runPrediction(val);
+                input.value = '';
+            }
+        }
+
+        // Stage Selection Function
+        function selectPipelineStage(stageNum) {
+            [1, 2, 3].forEach(n => {
+                const card = document.getElementById(`stage-card-${n}`);
+                card.classList.remove('border-cyan-500/50', 'border-amber-400/50', 'border-purple-400/50', 'shadow-glow-cyan');
+                card.classList.add('border-transparent');
+            });
+
+            const activeCard = document.getElementById(`stage-card-${stageNum}`);
+            activeCard.classList.remove('border-transparent');
+            
+            if (stageNum === 1) activeCard.classList.add('border-cyan-500/50', 'shadow-glow-cyan');
+            if (stageNum === 2) activeCard.classList.add('border-amber-400/50');
+            if (stageNum === 3) activeCard.classList.add('border-purple-400/50');
+        }
+
+        // Theme Switcher
+        function setTheme(themeName) {
+            const body = document.getElementById('app-body');
+            body.classList.remove('theme-cyberpunk', 'theme-gold', 'theme-matrix', 'theme-midnight', 'theme-light');
+            body.classList.add(`theme-${themeName}`);
+        }
+
+        // Font Size Adjuster
+        function setFontSize(sizeKey) {
+            const body = document.getElementById('app-body');
+            body.classList.remove('text-scale-sm', 'text-scale-base', 'text-scale-lg', 'text-scale-xl');
+            body.classList.add(`text-scale-${sizeKey}`);
+
+            // Active button highlights
+            ['sm', 'base', 'lg', 'xl'].forEach(k => {
+                const btn = document.getElementById(`btn-font-${k}`);
+                if (k === sizeKey) {
+                    btn.classList.add('bg-cyan-500', 'text-black');
+                    btn.classList.remove('hover:bg-white/10');
+                } else {
+                    btn.classList.remove('bg-cyan-500', 'text-black');
+                    btn.classList.add('hover:bg-white/10');
+                }
+            });
+        }
+
+        // Initialize Default View
+        runPrediction('Thank you for');
+    </script>
+</body>
+</html>
